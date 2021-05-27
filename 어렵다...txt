@@ -1,0 +1,297 @@
+main.c
+
+#include "stack.h"
+int aut, count = 0;
+
+int main()
+{
+	read_maze();				 
+	int n = 10;					
+	StackType s = create();       
+	Position cur;          
+	cur.x = 1;
+	cur.y = 1;
+	FILE* fp = fopen("result.txt", "w");
+
+	printf("0: 북, 1: 동, 2: 남, 3: 서\n");
+	while (1)
+	{
+		if (cur.x == n - 2 && cur.y == n - 2)           
+		{
+			printf("Found the path.\n");
+			fprintf(fp, "Found the path.\n");
+			break;
+		}
+
+		bool forwarded = false;      
+		aut, count = 0;
+
+		printf("\n이동가능한 방향: ");
+		fprintf(fp, "\n이동가능한 방향: ");
+		for (int dir = 0; dir < 4; dir++)
+		{
+			if (movable(cur, dir))		
+			{
+				printf("%d ", dir);
+				fprintf(fp, "%d ", dir);
+				forwarded = true;
+				count++;
+				aut = dir;
+			}
+		}
+
+		if (count == 1 && forwarded)
+		{
+			maze[cur.x][cur.y] = VISITED;         
+			cur = auto_move_to(&s, cur, aut);	
+			printf("\n현재위치: (%d, %d)", cur.x, cur.y);
+			fprintf(fp, "\n현재위치: (%d, %d)", cur.x, cur.y);
+		}
+		else if (count != 1 && forwarded)
+		{
+			maze[cur.x][cur.y] = VISITED;        
+			cur = move_to(&s, cur);
+			printf("\n현재위치: (%d, %d)", cur.x, cur.y);
+			fprintf(fp, "\n현재위치: (%d, %d)", cur.x, cur.y);
+		}
+		else						
+		{
+			printf("no way");
+			fprintf(fp, "no way");
+			maze[cur.x][cur.y] = BACKTRACKED;	
+			if (is_empty(&s))			
+			{
+				printf("No path exits.\n");
+				fprintf(fp, "No path exits.\n");
+				break;
+			}
+			pop(&s, &cur);		
+			printf("\n현재위치: (%d, %d)", cur.x, cur.y);
+			fprintf(fp, "\n현재위치: (%d, %d)", cur.x, cur.y);
+		}
+	}
+	print_maze();
+
+}
+
+
+
+
+
+
+
+
+
+
+
+pos.c
+
+#include "stack.h"
+
+void read_maze()
+{
+    int count = 0;
+
+    int data[MAX];
+
+	FILE* p_file = fopen("maze.txt", "rt");
+    if (p_file != NULL) {
+        while (EOF != fscanf(p_file, "%d", &data[count])) {
+            count++;
+            if (count >= MAX) break;
+        }
+        fclose(p_file);
+    }
+
+    for (int i = 0; i < 10; i++)
+    {
+        for (int j = 0; j < 10; j++)
+        {
+            maze[i][j] = data[10 * i + j];
+        }
+    }
+}
+
+int offset[4][2] = { { -1, 0}, {0,1},{1,0},{0,-1} };
+
+
+Position move_to(StackType *s,Position pos)
+{
+	FILE* fp = fopen("result.txt", "w");
+	int dir = 0;
+	printf("\n갈방향 선택: ");
+	fprintf(fp, "\n갈방향 선택: ");
+	scanf("%d", &dir);
+	fprintf(fp, "%d", dir);
+	fprintf(fp, "\n이동할 방향: %d", dir);
+	Position next;
+	push(s, &pos);			
+	next.x = pos.x + offset[dir][0];
+	next.y = pos.y + offset[dir][1];
+	return next;
+}
+Position auto_move_to(StackType *s, Position pos, int aut)
+{
+	FILE* fp = fopen("result.txt", "w");
+	int dir = aut;
+	Position next;
+	push(s, &pos);			
+	next.x = pos.x + offset[dir][0];
+	next.y = pos.y + offset[dir][1];
+	return next;
+}
+
+bool movable(Position pos, int dir)
+{
+	Position pre;
+	pre.x = pos.x + offset[dir][0];
+	pre.y = pos.y + offset[dir][1];
+	if (maze[pre.x][pre.y] == 0) return 1;
+	if (maze[pre.x][pre.y] != 0) return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+func.c
+
+#include "stack.h"
+
+void init(StackType* s)
+{
+	s->top = -1;
+}
+int is_empty(StackType* s)
+{
+	return(s->top == -1);
+}
+int is_full(StackType* s)
+{
+	return(s->top == (MAX_STACK_SIZE - 1));
+}
+void push(StackType* s, Position* pos)
+{
+	if (is_full(s))
+	{
+		fprintf(stderr, "스택 포화 에러\n");
+		return;
+	}
+	else
+	{
+		(s->stack[++(s->top)]).x = (*pos).x;
+		(s->stack[++(s->top)]).y = (*pos).y;
+	}
+}
+void pop(StackType* s,Position* cur)
+{
+	if (is_empty(s))
+	{
+		fprintf(stderr, "스택 공백 에러\n");
+		exit(1);
+	}
+	else 
+	{
+		(*cur).y = (s->stack[(s->top)--]).y;
+		(*cur).x = (s->stack[(s->top)--]).x;
+	}
+}
+Position peek(StackType* s)
+{
+	if (is_empty(s))
+	{
+		fprintf(stderr, "스택 공백 에러\n");
+		exit(1);
+	}
+	else return s->stack[s->top];
+}
+
+StackType create()
+{
+	StackType s;
+	init(&s);
+	return s;
+}
+
+void print_maze()
+{
+	FILE* fp = fopen("result.txt", "w");
+
+	for (int i = 0; i < 10; i++)
+	{
+		for (int j = 0; j < 10; j++)
+		{
+			fprintf(fp, "%d", maze[i][j]);
+		}
+		fprintf(fp, "\n");
+	}
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+stack.h
+
+#pragma once
+#define MAX_STACK_SIZE 100
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#define MAX 100
+#define MAZE_SIZE 10
+#define PATH 0			
+#define WALL 1			
+#define VISITED 2		
+#define BACKTRACKED 3	
+int maze[MAZE_SIZE][MAZE_SIZE];
+
+typedef struct Pos
+{
+	short x, y;
+}Position;
+
+typedef struct
+{
+	Position stack[MAX_STACK_SIZE];
+	int top;
+}StackType;
+
+void read_maze();
+void print_maze();
+void init(StackType* s);
+int is_empty(StackType* s);
+int is_full(StackType* s);
+void push(StackType* s, Position* pos);
+void pop(StackType* s, Position* cur);
+Position peek(StackType* s);
+StackType create();
+bool movable(Position pos, int dir);
+Position move_to(StackType *s, Position pos);
+Position auto_move_to(StackType *s, Position pos, int aut);
