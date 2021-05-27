@@ -1,0 +1,4 @@
+﻿  Using triplet "x86-windows" from "C:\Users\USER\YOLO_V4\vcpkg-master\vcpkg-master\installed\x86-windows\"
+  hw2mmap.c
+MSVCRTD.lib(exe_main.obj) : error LNK2019: unresolved external symbol _main referenced in function "int __cdecl invoke_main(void)" (?invoke_main@@YAHXZ)
+C:\Users\USER\source\repos\hw2mmap\Debug\hw2mmap.exe : fatal error LNK1120: 1 unresolved externals
